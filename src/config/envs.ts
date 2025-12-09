@@ -5,4 +5,5 @@ export const envs = {
   PORT: envVar.get("PORT").required().asPortNumber(),
   MONGO_URL: envVar.get("MONGO_URL").required().asString(),
   DB_NAME: envVar.get("DB_NAME").required().asString(),
+  JWT_SECRET: envVar.get("JWT_SECRET").required().asString(),
 };
