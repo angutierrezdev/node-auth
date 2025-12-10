@@ -3,6 +3,7 @@ import { UserModel } from "../../data/mongodb";
 import {
   AuthDatasource,
   CustomError,
+  LoginUserDto,
   RegisterUserDto,
   UserEntity,
 } from "../../domain";
@@ -16,6 +17,32 @@ export class AuthMongoDatasourceImpl implements AuthDatasource {
     private readonly hashPassword: HashFunction = BcryptAdapter.hash,
     private readonly comparePassword: CompareFunction = BcryptAdapter.compare
   ) {}
+
+  async login(loginUserDto: LoginUserDto): Promise<UserEntity> {
+    const { email, password } = loginUserDto;
+
+    try {
+      const user = await UserModel.findOne({ email });
+
+      if (!user) {
+        throw CustomError.unauthorized("Invalid credentials");
+      }
+
+      const isPasswordValid = this.comparePassword(password, user.password);
+
+      if (!isPasswordValid) {
+        throw CustomError.unauthorized("Invalid credentials");
+      }
+      
+      return UserMapper.userEntityFromObject(user);
+    } catch (error) {
+      if (error instanceof CustomError) {
+        throw error;
+      }
+
+      throw CustomError.internalServerError();
+    }
+  }
 
   async register(registerUserDto: RegisterUserDto): Promise<UserEntity> {
     const { email, password, name } = registerUserDto;
