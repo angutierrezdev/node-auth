@@ -1,9 +1,12 @@
 import { Request, Response, NextFunction } from "express";
 import { JwtAdapter } from "../../config";
-import { UserModel } from "../../data/mongodb";
+import { Container } from "../../infrastructure";
+import { UserService } from "../../domain";
 
 export class AuthMiddleware {
-  static async validateJWT(req: Request, res: Response, next: NextFunction) {
+  constructor(private readonly userService: UserService) {}
+
+  validateJWT = async (req: Request, res: Response, next: NextFunction) => {
     const authHeader = req.headers["authorization"];
     const autorization = Array.isArray(authHeader) ? authHeader[0] : authHeader;
 
@@ -21,17 +24,17 @@ export class AuthMiddleware {
         return res.status(401).json({ error: "Unauthorized: Invalid Token" });
       }
 
-      const user = await UserModel.findById(payload.id);
+      const user = await this.userService.findById(payload.id);
       if (!user) {
         return res.status(401).json({ error: "Unauthorized: User not found" });
       }
 
-      req.body = { ...req.body, payload, user: user };
+      req.body = { ...req.body, payload, user };
 
       next();
     } catch (error) {
       console.log(error);
       return res.status(500).json({ error: "Internal Server Error" });
     }
-  }
+  };
 }

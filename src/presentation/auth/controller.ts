@@ -6,11 +6,15 @@ import {
   LoginUserDto,
   RegisterUser,
   RegisterUserDto,
+  GetUsers,
 } from "../../domain";
-import { UserModel } from "../../data/mongodb";
+import { UserService } from "../../domain";
 
 export class AuthController {
-  constructor(private readonly authRepository: AuthRepository) {}
+  constructor(
+    private readonly authRepository: AuthRepository,
+    private readonly userService: UserService
+  ) {}
 
   private handleError = (error: unknown, res: Response) => {
     if (error instanceof CustomError) {
@@ -48,9 +52,18 @@ export class AuthController {
   };
 
   getUsers = (req: Request, res: Response) => {
-    UserModel.find()
+    new GetUsers(this.userService)
+      .execute()
       .then((users) => {
-        res.json({ users, user: req.body?.user });
+        res.json({
+          users: users.map((user) => ({
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+          })),
+          authenticatedUser: req.body?.user,
+        });
       })
       .catch((error) => this.handleError(error, res));
   };
